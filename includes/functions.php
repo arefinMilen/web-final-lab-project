@@ -4,11 +4,6 @@
  * Common functions used throughout the application
  */
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 // Check if user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
@@ -26,19 +21,34 @@ function getCurrentUser() {
     return $stmt->fetch();
 }
 
-// Redirect with message
+// FIXED: Redirect with proper header handling
 function redirect($url, $message = '', $type = 'info') {
+    // Store flash messages first
     if ($message) {
         $_SESSION['flash_message'] = $message;
         $_SESSION['flash_type'] = $type;
     }
-    if (!headers_sent()) {
-        header("Location: " . $url);
-        exit;
-    } else {
-        echo "<script>window.location.href='" . htmlspecialchars($url) . "';</script>";
+    
+    // Clean any output buffer
+    if (ob_get_level()) {
+        ob_clean();
+    }
+    
+    // Check if headers are already sent
+    if (headers_sent($file, $line)) {
+        // Use JavaScript redirect as fallback
+        echo "<script type='text/javascript'>";
+        echo "window.location.href = '" . addslashes($url) . "';";
+        echo "</script>";
+        echo "<noscript>";
+        echo "<meta http-equiv='refresh' content='0;url=" . htmlspecialchars($url) . "' />";
+        echo "</noscript>";
         exit;
     }
+    
+    // Use header redirect if possible
+    header("Location: " . $url);
+    exit;
 }
 
 // Display flash messages
@@ -192,3 +202,25 @@ function generateCSRF() {
 function verifyCSRF($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+// NEW: Safe header function that can be called before any output
+function safeHeader() {
+    global $pdo;
+    
+    // Only get user data, don't output anything
+    $current_user = null;
+    $cart_count = 0;
+    
+    if (isLoggedIn()) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $current_user = $stmt->fetch();
+        
+        $stmt = $pdo->prepare("SELECT SUM(quantity) FROM cart WHERE user_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $cart_count = $stmt->fetchColumn() ?? 0;
+    }
+    
+    return ['user' => $current_user, 'cart_count' => $cart_count];
+}
+?>
