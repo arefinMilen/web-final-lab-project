@@ -419,6 +419,83 @@ include 'includes/header.php';
 </div>
 
 <!-- JavaScript for Enhanced UX -->
-
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textareas
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    });
+    
+    // Form validation
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing Order...';
+        
+        // Basic validation
+        const deliveryAddress = document.getElementById('delivery_address').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        
+        if (!deliveryAddress || !phone) {
+            e.preventDefault();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Place Order →';
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        // Phone validation
+        const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
+        if (!phoneRegex.test(phone)) {
+            e.preventDefault();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Place Order →';
+            alert('Please enter a valid phone number');
+            return;
+        }
+    });
+    
+    // Smooth animations
+    const elements = document.querySelectorAll('.bg-white');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            el.style.transition = 'all 0.4s ease-out';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Character counter for textareas
+    const addressTextarea = document.getElementById('delivery_address');
+    const instructionsTextarea = document.getElementById('special_instructions');
+    
+    function addCharacterCounter(textarea, maxLength = 500) {
+        const counter = document.createElement('div');
+        counter.className = 'text-xs text-gray-500 mt-1 text-right';
+        textarea.parentNode.insertBefore(counter, textarea.nextSibling);
+        
+        function updateCounter() {
+            const remaining = maxLength - textarea.value.length;
+            counter.textContent = `${textarea.value.length}/${maxLength}`;
+            counter.className = remaining < 50 ? 'text-xs text-red-500 mt-1 text-right' : 'text-xs text-gray-500 mt-1 text-right';
+        }
+        
+        textarea.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+    
+    addCharacterCounter(addressTextarea);
+    addCharacterCounter(instructionsTextarea, 300);
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
