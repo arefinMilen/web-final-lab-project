@@ -2,7 +2,7 @@
 $page_title = "Register";
 require_once 'includes/header.php';
 
-// Redirect if already logged in
+// If the user is already logged in, prevent them from accessing the register page
 if (isLoggedIn()) {
     redirect(BASE_URL . 'dashboard.php');
 }
@@ -11,11 +11,11 @@ $errors = [];
 $form_data = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verify CSRF token
+    // Check CSRF token for security (protect against cross-site request forgery)
     if (!verifyCSRF($_POST['csrf_token'] ?? '')) {
         $errors[] = "Invalid request. Please try again.";
     } else {
-        // Sanitize and validate input
+        // Collect and sanitize form input to prevent XSS or invalid data
         $form_data = [
             'name' => sanitize($_POST['name'] ?? ''),
             'email' => sanitize($_POST['email'] ?? ''),
@@ -24,41 +24,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'password' => $_POST['password'] ?? '',
             'confirm_password' => $_POST['confirm_password'] ?? ''
         ];
-
-        // Validation
+        // --------------------
+        // Input Validations
+        // --------------------
+        // Validate full name
         if (empty($form_data['name'])) {
             $errors[] = "Name is required.";
         } elseif (strlen($form_data['name']) < 2) {
             $errors[] = "Name must be at least 2 characters long.";
         }
-
+         // Validate email format
         if (empty($form_data['email'])) {
             $errors[] = "Email is required.";
         } elseif (!filter_var($form_data['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = "Please enter a valid email address.";
         }
-
+        // Validate phone number (only digits, +, - allowed)
         if (empty($form_data['phone'])) {
             $errors[] = "Phone number is required.";
         } elseif (!preg_match('/^[0-9+\-\s]{10,15}$/', $form_data['phone'])) {
             $errors[] = "Please enter a valid phone number.";
         }
-
+        // Check if university is selected
         if (empty($form_data['university'])) {
             $errors[] = "University is required.";
         }
-
+        // Validate password length
         if (empty($form_data['password'])) {
             $errors[] = "Password is required.";
         } elseif (strlen($form_data['password']) < 6) {
             $errors[] = "Password must be at least 6 characters long.";
         }
-
+        // Confirm both passwords match
         if ($form_data['password'] !== $form_data['confirm_password']) {
             $errors[] = "Passwords do not match.";
         }
 
-        // Check if email already exists
+        // Check if email already exists in database
         if (empty($errors)) {
             $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
             $stmt->execute([$form_data['email']]);
@@ -67,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Create user if no errors
+        // If no validation errors, create new user account
         if (empty($errors)) {
             $hashed_password = password_hash($form_data['password'], PASSWORD_DEFAULT);
             
@@ -80,9 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form_data['university'],
                     $hashed_password
                 ]);
-
+                // Redirect user to login page after successful registration
                 redirect(BASE_URL . 'login.php', 'Registration successful! Please login to continue.', 'success');
             } catch (Exception $e) {
+                // Catch unexpected database errors
                 $errors[] = "Registration failed. Please try again.";
             }
         }
@@ -92,8 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8 animate-fadeIn">
-        <!-- Header -->
+       <!-- Page Header -->
         <div class="text-center">
+             <!-- Logo/Icon -->
             <div class="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
                 <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
@@ -107,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form class="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-lg" method="POST">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRF(); ?>">
             
-            <!-- Error Messages -->
+            <!-- Show error messages (if any validation fails) -->
             <?php if (!empty($errors)): ?>
                 <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div class="flex">
