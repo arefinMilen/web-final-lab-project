@@ -173,15 +173,7 @@ include 'includes/header.php';
     </div>
 
     <!-- Display Errors -->
-    <?php if (!empty($errors)): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <ul class="list-disc list-inside">
-                <?php foreach ($errors as $error): ?>
-                    <li><?php echo sanitize($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+    
 
     <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
         
