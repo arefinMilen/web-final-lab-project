@@ -135,21 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get user's products
-try {
-    $stmt = $pdo->prepare("
-        SELECT p.*, 
-               (SELECT COUNT(*) FROM product_images pi WHERE pi.product_id = p.id) as image_count,
-               (SELECT image_path FROM product_images pi WHERE pi.product_id = p.id ORDER BY image_order LIMIT 1) as first_image,
-               (SELECT COUNT(*) FROM cart c WHERE c.product_id = p.id) as cart_count
-        FROM products p 
-        WHERE p.user_id = ? 
-        ORDER BY p.created_at DESC
-    ");
-    $stmt->execute([$user_id]);
-    $user_products = $stmt->fetchAll();
-} catch (Exception $e) {
-    $user_products = [];
-}
+
 
 // Get categories for dropdown
 $categories = getCategories();
