@@ -1,8 +1,7 @@
 <?php
 $page_title = "Login";
 require_once 'includes/header.php';
-
-// If the user is already logged in, send them to the dashboard
+// Redirect to dashboard if the user is already logged in
 if (isLoggedIn()) {
     redirect(BASE_URL . 'dashboard.php');
 }
@@ -11,46 +10,48 @@ $errors = [];
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verify CSRF token
+    // Check CSRF token to prevent cross-site request forgery
     if (!verifyCSRF($_POST['csrf_token'] ?? '')) {
         $errors[] = "Invalid request. Please try again.";
     } 
-    else {
+    else 
+        {
+        // Sanitize user input to prevent XSS attacks    
         $email = sanitize($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $remember_me = isset($_POST['remember_me']);
 
-        // Validation
+        // Validate email field
         if (empty($email)) {
             $errors[] = "Email is required.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Please enter a valid email address.";
+            $errors[] = "Please Enter a Valid Email Address.";
         }
-
+        // Validate password field
         if (empty($password)) {
             $errors[] = "Password is required.";
         }
 
-      // Try to log in the user
+        // If no validation errors, attempt login
         if (empty($errors)) {
             try {
                 $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE email = ?");
                 $stmt->execute([$email]);
                 $user = $stmt->fetch();
-
+                // Verify password against hashed password in DB
                 if ($user && password_verify($password, $user['password'])) {
-                    // Login successful
+                   // Save user data in session
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_name'] = $user['name'];
                     $_SESSION['user_email'] = $user['email'];
 
-                    // Handle remember me (optional enhancement)
+                    // Extend session lifetime if "Remember me" is checked
                     if ($remember_me) {
                         // Set a longer session lifetime
                         ini_set('session.gc_maxlifetime', 30 * 24 * 60 * 60); // 30 days
                     }
 
-                    // Redirect to intended page or dashboard
+                    // Redirect user to dashboard or intended page
                     $redirect_url = $_SESSION['redirect_after_login'] ?? BASE_URL . 'dashboard.php';
                     unset($_SESSION['redirect_after_login']);
                     
@@ -59,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors[] = "Invalid email or password.";
                 }
             } catch (Exception $e) {
+                // Catch DB or query errors
                 $errors[] = "Login failed. Please try again.";
             }
         }
@@ -199,7 +201,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
- // Toggle password visibility   
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
     const eye = document.getElementById(fieldId + '-eye');
@@ -217,14 +218,16 @@ function togglePassword(fieldId) {
         `;
     }
 }
-// Autofill demo user credentials
+
 function fillDemoCredentials() {
     document.getElementById('email').value = 'admin@campusmart.com';
     document.getElementById('password').value = 'admin123';
 }
-// Automatically focus on email when the page loads
+
+// Focus on email field when page loads
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('email').focus();
 });
 </script>
+
 <?php require_once 'includes/footer.php'; ?>
