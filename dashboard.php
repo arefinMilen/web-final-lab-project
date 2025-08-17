@@ -158,7 +158,30 @@ require_once 'includes/header.php';
 ?>
 
 <!-- Dashboard Header -->
-
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, <?php echo sanitize($current_user['name']); ?>!</h1>
+                <p class="text-blue-100">Manage your products and track your sales</p>
+            </div>
+            <div class="hidden md:flex items-center space-x-8 text-center">
+                <div>
+                    <div class="text-2xl font-bold"><?php echo count($user_products); ?></div>
+                    <div class="text-sm text-blue-200">Total Products</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold"><?php echo count(array_filter($user_products, fn($p) => $p['status'] === 'active')); ?></div>
+                    <div class="text-sm text-blue-200">Active</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold"><?php echo count(array_filter($user_products, fn($p) => $p['status'] === 'sold')); ?></div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Main Content -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
