@@ -176,7 +176,7 @@ require_once 'includes/header.php';
                 </div>
                 <div>
                     <div class="text-2xl font-bold"><?php echo count(array_filter($user_products, fn($p) => $p['status'] === 'sold')); ?></div>
-                    
+                    <div class="text-sm text-blue-200">Sold</div>
                 </div>
             </div>
         </div>
