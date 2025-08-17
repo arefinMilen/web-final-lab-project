@@ -427,7 +427,9 @@ function updateQuantity(cartId, newQuantity) {
 
 // Remove item from cart
 function removeItem(cartId) {
-    
+    if (!confirm('Are you sure you want to remove this item from your cart?')) {
+        return;
+    }
     
     const cartItem = document.querySelector(`[data-cart-id="${cartId}"]`);
     
