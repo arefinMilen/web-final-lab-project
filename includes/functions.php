@@ -4,6 +4,11 @@
  * Common functions used throughout the application
  */
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Check if user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
@@ -27,8 +32,13 @@ function redirect($url, $message = '', $type = 'info') {
         $_SESSION['flash_message'] = $message;
         $_SESSION['flash_type'] = $type;
     }
-    header("Location: " . $url);
-    exit;
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit;
+    } else {
+        echo "<script>window.location.href='" . htmlspecialchars($url) . "';</script>";
+        exit;
+    }
 }
 
 // Display flash messages
@@ -182,4 +192,3 @@ function generateCSRF() {
 function verifyCSRF($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
-?>
