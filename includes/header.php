@@ -1,10 +1,20 @@
 <?php
-// Include configuration and functions
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/functions.php';
+/**
+ * IMPORTANT: This header file is designed to be included AFTER 
+ * all redirects and processing are complete
+ */
 
-$current_user = getCurrentUser();
-$cart_count = isLoggedIn() ? getCartCount() : 0;
+// Only include this if we're not redirecting
+if (!headers_sent()) {
+    // Include configuration and functions
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/functions.php';
+    
+    // Get user data safely
+    $header_data = safeHeader();
+    $current_user = $header_data['user'];
+    $cart_count = $header_data['cart_count'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -104,7 +114,7 @@ $cart_count = isLoggedIn() ? getCartCount() : 0;
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
                                 </div>
-                                <span class="hidden lg:block"><?php echo sanitize($current_user['name']); ?></span>
+                                <span class="hidden lg:block"><?php echo sanitize($current_user['name'] ?? 'User'); ?></span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
@@ -163,8 +173,14 @@ $cart_count = isLoggedIn() ? getCartCount() : 0;
 
     <!-- Mobile menu toggle script -->
     <script>
-        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobile-menu-btn');
             const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+            
+            if (menuBtn && menu) {
+                menuBtn.addEventListener('click', function() {
+                    menu.classList.toggle('hidden');
+                });
+            }
         });
     </script>
