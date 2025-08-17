@@ -8,6 +8,81 @@
 require_once 'config/database.php';
 require_once 'includes/functions.php';
 
+// Check if user is logged in
+if (!isLoggedIn()) {
+    redirect('login.php', 'Please login to view your cart', 'warning');
+}
+
+$current_user = getCurrentUser();
+$page_title = 'Shopping Cart';
+
+// Handle AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    $action = $_POST['action'];
+    $response = ['success' => false, 'message' => ''];
+    
+    try {
+        switch ($action) {
+            case 'update_quantity':
+                $cart_id = intval($_POST['cart_id']);
+                $quantity = max(1, intval($_POST['quantity'])); // Minimum quantity is 1
+                
+                // Verify cart item belongs to current user
+                $stmt = $pdo->prepare("SELECT id FROM cart WHERE id = ? AND user_id = ?");
+                $stmt->execute([$cart_id, $_SESSION['user_id']]);
+                
+                if ($stmt->fetch()) {
+                    $stmt = $pdo->prepare("UPDATE cart SET quantity = ? WHERE id = ?");
+                    $stmt->execute([$quantity, $cart_id]);
+                    
+                    $response['success'] = true;
+                    $response['message'] = 'Quantity updated successfully';
+                    $response['cart_count'] = getCartCount();
+                } else {
+                    $response['message'] = 'Cart item not found';
+                }
+                break;
+                
+            case 'remove_item':
+                $cart_id = intval($_POST['cart_id']);
+                
+                // Verify cart item belongs to current user
+                $stmt = $pdo->prepare("SELECT id FROM cart WHERE id = ? AND user_id = ?");
+                $stmt->execute([$cart_id, $_SESSION['user_id']]);
+                
+                if ($stmt->fetch()) {
+                    $stmt = $pdo->prepare("DELETE FROM cart WHERE id = ?");
+                    $stmt->execute([$cart_id]);
+                    
+                    $response['success'] = true;
+                    $response['message'] = 'Item removed from cart';
+                    $response['cart_count'] = getCartCount();
+                } else {
+                    $response['message'] = 'Cart item not found';
+                }
+                break;
+                
+            case 'clear_cart':
+                $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                
+                $response['success'] = true;
+                $response['message'] = 'Cart cleared successfully';
+                $response['cart_count'] = 0;
+                break;
+                
+            default:
+                $response['message'] = 'Invalid action';
+        }
+    } catch (Exception $e) {
+        $response['message'] = 'An error occurred: ' . $e->getMessage();
+    }
+    
+    echo json_encode($response);
+    exit;
+}
 
 // Get cart items for current user
 $query = "SELECT c.*, p.title, p.description, p.price, p.condition_type, p.negotiable, 
