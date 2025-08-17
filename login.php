@@ -2,7 +2,7 @@
 $page_title = "Login";
 require_once 'includes/header.php';
 
-// Redirect if already logged in
+// If the user is already logged in, send them to the dashboard
 if (isLoggedIn()) {
     redirect(BASE_URL . 'dashboard.php');
 }
@@ -14,7 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify CSRF token
     if (!verifyCSRF($_POST['csrf_token'] ?? '')) {
         $errors[] = "Invalid request. Please try again.";
-    } else {
+    } 
+    else {
         $email = sanitize($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $remember_me = isset($_POST['remember_me']);
@@ -30,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Password is required.";
         }
 
-        // Authenticate user
+      // Try to log in the user
         if (empty($errors)) {
             try {
                 $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE email = ?");
@@ -198,6 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
+ // Toggle password visibility   
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
     const eye = document.getElementById(fieldId + '-eye');
@@ -215,16 +217,14 @@ function togglePassword(fieldId) {
         `;
     }
 }
-
+// Autofill demo user credentials
 function fillDemoCredentials() {
     document.getElementById('email').value = 'admin@campusmart.com';
     document.getElementById('password').value = 'admin123';
 }
-
-// Focus on email field when page loads
+// Automatically focus on email when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('email').focus();
 });
 </script>
-
 <?php require_once 'includes/footer.php'; ?>
